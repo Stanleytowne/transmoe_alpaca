@@ -207,7 +207,7 @@ def train():
             cache_dir=training_args.cache_dir,
         )
 
-    if model_args.router_only:
+    if training_args.router_only:
         for name, param in model.named_parameters():
             if 'router' in name:
                 param.requires_grad = True
