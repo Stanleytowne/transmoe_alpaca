@@ -1,4 +1,5 @@
 logs/
+wandb/
 output/
 
 # Byte-compiled / optimized / DLL files

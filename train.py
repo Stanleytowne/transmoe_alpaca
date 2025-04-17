@@ -45,7 +45,7 @@ PROMPT_DICT = {
 @dataclass
 class ModelArguments:
     model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
-    model_type: Optional[str] = field(default="llamamoe")
+    convert_from_llama: Optional[bool] = field(default=False)
     num_fused_layers: Optional[int] = field(default=4)
     num_experts: Optional[int] = field(default=16)
     num_experts_per_tok: Optional[int] = field(default=8)
@@ -66,6 +66,7 @@ class TrainingArguments(transformers.TrainingArguments):
         default=512,
         metadata={"help": "Maximum sequence length. Sequences will be right padded (and possibly truncated)."},
     )
+    router_only: Optional[bool] = field(default=False)
 
 
 def smart_tokenizer_and_embedding_resize(
@@ -189,7 +190,7 @@ def train():
     parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    if model_args.model_type == "llamamoe":
+    if model_args.convert_from_llama:
         model = transformers.LlamaMoeForCausalLM.from_llama_pretrained(
             model_args.model_name_or_path,
             cache_dir=training_args.cache_dir,
@@ -205,6 +206,13 @@ def train():
             model_args.model_name_or_path,
             cache_dir=training_args.cache_dir,
         )
+
+    if model_args.router_only:
+        for name, param in model.named_parameters():
+            if 'router' in name:
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
