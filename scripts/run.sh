@@ -11,10 +11,10 @@
 #SBATCH -c 32
 
 torchrun --nproc_per_node=4 --master_port=12345 train.py \
-    --model_name_or_path ./output/LlamaMoe2-7B/ \
+    --model_name_or_path ./output/alpacamoe-2-7B-onlyrouter \
     --data_path ./alpaca_data.json \
     --bf16 True \
-    --output_dir ./output/Llama-2-7B-onlyrouter \
+    --output_dir ./output/alpacamoe-2-7B \
     --num_train_epochs 3 \
     --per_device_train_batch_size 4 \
     --per_device_eval_batch_size 4 \
