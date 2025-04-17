@@ -45,6 +45,12 @@ PROMPT_DICT = {
 @dataclass
 class ModelArguments:
     model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
+    model_type: Optional[str] = field(default="llamamoe")
+    num_fused_layers: Optional[int] = field(default=4)
+    num_experts: Optional[int] = field(default=16)
+    num_experts_per_tok: Optional[int] = field(default=8)
+    router_aux_loss_coef: Optional[float] = field(default=1e-3)
+    router_std: Optional[float] = field(default=0.02)
 
 
 @dataclass
@@ -183,10 +189,22 @@ def train():
     parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    model = transformers.AutoModelForCausalLM.from_pretrained(
-        model_args.model_name_or_path,
-        cache_dir=training_args.cache_dir,
-    )
+    if model_args.model_type == "llamamoe":
+        model = transformers.LlamaMoeForCausalLM.from_llama_pretrained(
+            model_args.model_name_or_path,
+            cache_dir=training_args.cache_dir,
+            num_fused_layers=model_args.num_fused_layers,
+            num_experts=model_args.num_experts,
+            num_experts_per_tok=model_args.num_experts_per_tok,
+            router_aux_loss_coef=model_args.router_aux_loss_coef,
+            router_initialization_method=model_args.router_std,
+            output_router_logits=True,
+        )
+    else:
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            model_args.model_name_or_path,
+            cache_dir=training_args.cache_dir,
+        )
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
